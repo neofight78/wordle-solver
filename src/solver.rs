@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 pub struct Solver {
     words: Vec<&'static str>,
-    possible: HashMap<char, HashSet<usize>>,
+    possible: HashMap<char, [bool; 5]>,
     present: HashSet<char>,
     confirmed: [Option<char>; 5],
 }
@@ -41,19 +41,13 @@ impl Solver {
             match feedback[i] {
                 'a' => {
                     if (0..5).any(|j| guess[j] == guess[i] && feedback[j] == 'p') {
-                        self.possible
-                            .entry(guess[i])
-                            .or_insert_with(|| HashSet::from([0, 1, 2, 3, 4]))
-                            .remove(&i);
+                        self.possible.entry(guess[i]).or_insert([true; 5])[i] = false;
                     } else {
-                        self.possible.entry(guess[i]).or_default().clear();
+                        *self.possible.entry(guess[i]).or_default() = [false; 5];
                     }
                 }
                 'p' => {
-                    self.possible
-                        .entry(guess[i])
-                        .or_insert_with(|| HashSet::from([0, 1, 2, 3, 4]))
-                        .remove(&i);
+                    self.possible.entry(guess[i]).or_insert([true; 5])[i] = false;
                     self.present.insert(guess[i]);
                 }
                 'c' => {
@@ -80,7 +74,7 @@ impl Solver {
                 }
 
                 if let Some(possible) = self.possible.get(&c) {
-                    if !possible.contains(&i) {
+                    if !possible[i] {
                         continue 'words;
                     }
                 }
