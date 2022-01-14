@@ -1,8 +1,25 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
+use std::ops::{Index, IndexMut};
+
+pub struct CharArray<T>([T; 26]);
+
+impl<T> Index<char> for CharArray<T> {
+    type Output = T;
+
+    fn index(&self, index: char) -> &Self::Output {
+        &self.0[index as usize - 'a' as usize]
+    }
+}
+
+impl<T> IndexMut<char> for CharArray<T> {
+    fn index_mut(&mut self, index: char) -> &mut Self::Output {
+        &mut self.0[index as usize - 'a' as usize]
+    }
+}
 
 pub struct Solver {
     words: Vec<&'static str>,
-    possible: HashMap<char, [bool; 5]>,
+    possible: CharArray<[bool; 5]>,
     present: HashSet<char>,
     confirmed: [Option<char>; 5],
 }
@@ -19,14 +36,14 @@ impl Solver {
 
         Self {
             words: word_list.lines().collect(),
-            possible: HashMap::new(),
+            possible: CharArray([[true; 5]; 26]),
             present: HashSet::new(),
             confirmed: [None; 5],
         }
     }
 
     pub fn reset(&mut self) {
-        self.possible.clear();
+        self.possible = CharArray([[true; 5]; 26]);
         self.present.clear();
         self.confirmed = [None; 5]
     }
@@ -41,13 +58,13 @@ impl Solver {
             match feedback[i] {
                 'a' => {
                     if (0..5).any(|j| guess[j] == guess[i] && feedback[j] == 'p') {
-                        self.possible.entry(guess[i]).or_insert([true; 5])[i] = false;
+                        self.possible[guess[i]][i] = false;
                     } else {
-                        *self.possible.entry(guess[i]).or_default() = [false; 5];
+                        self.possible[guess[i]] = [false; 5];
                     }
                 }
                 'p' => {
-                    self.possible.entry(guess[i]).or_insert([true; 5])[i] = false;
+                    self.possible[guess[i]][i] = false;
                     self.present.insert(guess[i]);
                 }
                 'c' => {
@@ -73,10 +90,8 @@ impl Solver {
                     continue 'letters;
                 }
 
-                if let Some(possible) = self.possible.get(&c) {
-                    if !possible[i] {
-                        continue 'words;
-                    }
+                if !self.possible[c][i] {
+                    continue 'words;
                 }
 
                 present.insert(c);
