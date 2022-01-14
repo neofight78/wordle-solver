@@ -4,7 +4,7 @@ pub struct Solver {
     words: Vec<&'static str>,
     possible: HashMap<char, HashSet<usize>>,
     present: HashSet<char>,
-    confirmed: HashMap<usize, char>,
+    confirmed: [Option<char>; 5],
 }
 
 impl Default for Solver {
@@ -21,14 +21,14 @@ impl Solver {
             words: word_list.lines().collect(),
             possible: HashMap::new(),
             present: HashSet::new(),
-            confirmed: HashMap::new(),
+            confirmed: [None; 5],
         }
     }
 
     pub fn reset(&mut self) {
         self.possible.clear();
         self.present.clear();
-        self.confirmed.clear();
+        self.confirmed = [None; 5]
     }
 
     pub fn feedback(&mut self, guess: &str, feedback: &str) {
@@ -57,7 +57,7 @@ impl Solver {
                     self.present.insert(guess[i]);
                 }
                 'c' => {
-                    self.confirmed.insert(i, guess[i]);
+                    self.confirmed[i] = Some(guess[i]);
                 }
                 _ => panic!("Invalid feedback has been incorrectly handled by the program!"),
             }
@@ -71,8 +71,8 @@ impl Solver {
             present.clear();
 
             'letters: for (i, c) in word.chars().enumerate() {
-                if let Some(confirmed) = self.confirmed.get(&i) {
-                    if *confirmed != c {
+                if let Some(confirmed) = self.confirmed[i] {
+                    if confirmed != c {
                         continue 'words;
                     }
 
