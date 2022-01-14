@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::ops::{Index, IndexMut};
 
 pub struct CharArray<T>([T; 26]);
@@ -17,10 +16,22 @@ impl<T> IndexMut<char> for CharArray<T> {
     }
 }
 
+impl CharArray<bool> {
+    fn is_subset(&self, other: &Self) -> bool {
+        for i in 'a'..='z' {
+            if self[i] && !other[i] {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
 pub struct Solver {
     words: Vec<&'static str>,
     possible: CharArray<[bool; 5]>,
-    present: HashSet<char>,
+    present: CharArray<bool>,
     confirmed: [Option<char>; 5],
 }
 
@@ -37,14 +48,14 @@ impl Solver {
         Self {
             words: word_list.lines().collect(),
             possible: CharArray([[true; 5]; 26]),
-            present: HashSet::new(),
+            present: CharArray([false; 26]),
             confirmed: [None; 5],
         }
     }
 
     pub fn reset(&mut self) {
         self.possible = CharArray([[true; 5]; 26]);
-        self.present.clear();
+        self.present = CharArray([false; 26]);
         self.confirmed = [None; 5]
     }
 
@@ -52,7 +63,7 @@ impl Solver {
         let guess = guess.chars().collect::<Vec<_>>();
         let feedback = feedback.chars().collect::<Vec<_>>();
 
-        self.present.clear();
+        self.present = CharArray([false; 26]);
 
         for i in 0..5 {
             match feedback[i] {
@@ -65,7 +76,7 @@ impl Solver {
                 }
                 'p' => {
                     self.possible[guess[i]][i] = false;
-                    self.present.insert(guess[i]);
+                    self.present[guess[i]] = true;
                 }
                 'c' => {
                     self.confirmed[i] = Some(guess[i]);
@@ -76,10 +87,8 @@ impl Solver {
     }
 
     pub fn guess(&self) -> Option<String> {
-        let mut present = HashSet::new();
-
         'words: for &word in &self.words {
-            present.clear();
+            let mut present = CharArray([false; 26]);
 
             'letters: for (i, c) in word.chars().enumerate() {
                 if let Some(confirmed) = self.confirmed[i] {
@@ -94,7 +103,7 @@ impl Solver {
                     continue 'words;
                 }
 
-                present.insert(c);
+                present[c] = true;
             }
 
             if self.present.is_subset(&present) {
