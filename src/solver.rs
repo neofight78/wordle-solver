@@ -16,6 +16,12 @@ impl<T> IndexMut<char> for CharArray<T> {
     }
 }
 
+impl<T: Copy> CharArray<T> {
+    fn new(default: T) -> Self {
+        CharArray([default; 26])
+    }
+}
+
 impl CharArray<bool> {
     fn is_subset(&self, other: &Self) -> bool {
         for i in 'a'..='z' {
@@ -47,15 +53,15 @@ impl Solver {
 
         Self {
             words: word_list.lines().collect(),
-            possible: CharArray([[true; 5]; 26]),
-            present: CharArray([false; 26]),
+            possible: CharArray::new([true; 5]),
+            present: CharArray::new(false),
             confirmed: [None; 5],
         }
     }
 
     pub fn reset(&mut self) {
-        self.possible = CharArray([[true; 5]; 26]);
-        self.present = CharArray([false; 26]);
+        self.possible = CharArray::new([true; 5]);
+        self.present = CharArray::new(false);
         self.confirmed = [None; 5]
     }
 
@@ -63,7 +69,7 @@ impl Solver {
         let guess = guess.chars().collect::<Vec<_>>();
         let feedback = feedback.chars().collect::<Vec<_>>();
 
-        self.present = CharArray([false; 26]);
+        self.present = CharArray::new(false);
 
         for i in 0..5 {
             match feedback[i] {
@@ -88,7 +94,7 @@ impl Solver {
 
     pub fn guess(&self) -> Option<String> {
         'words: for &word in &self.words {
-            let mut present = CharArray([false; 26]);
+            let mut present = CharArray::new(false);
 
             'letters: for (i, c) in word.chars().enumerate() {
                 if let Some(confirmed) = self.confirmed[i] {
